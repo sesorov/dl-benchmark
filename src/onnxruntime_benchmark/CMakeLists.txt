@@ -21,7 +21,6 @@ find_path(ORT_INCLUDE onnxruntime_cxx_api.h
         CMAKE_FIND_ROOT_PATH_BOTH)
 
 add_subdirectory(thirdparty/gflags)
-add_subdirectory(thirdparty/nlohmann_json)
 
 file(GLOB sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h*")
@@ -30,6 +29,17 @@ add_executable(${PROJECT_NAME} ${sources} ${headers})
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" ${ORT_INCLUDE})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json ${OpenCV_LIBRARIES} ${ORT_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE gflags ${OpenCV_LIBRARIES} ${ORT_LIBRARIES})
+
+# search for nlohmann-json submodule
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    find_package(nlohmann_json QUIET HINTS /usr/lib/cmake)
+    if(TARGET nlohmann_json)
+        add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
+        target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+    else()
+        message(FATAL_ERROR "Failed to find / build nlohmann_json library")
+    endif()
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)
